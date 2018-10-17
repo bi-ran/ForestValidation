@@ -10,18 +10,22 @@ endif
 SRCDIR = ./src
 BINDIR = ./bin
 BUILDDIR = ./build
+PDFDIR = ./pdfDir
 
 SRCS = $(wildcard $(SRCDIR)/*.C)
 EXES = $(patsubst $(SRCDIR)/%.C,$(BINDIR)/%.exe,$(SRCS))
 DEPS = $(patsubst $(SRCDIR)/%.C,$(BUILDDIR)/%.d,$(SRCS))
 
-.PHONY: all clean
+.PHONY: all clean mkdir
 
-all: $(EXES)
+all: $(EXES) mkdir
 
 $(BINDIR)/%.exe: $(SRCDIR)/%.C
 	@mkdir -p $(BINDIR) $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -MMD -MF $(BUILDDIR)/$(*F).d $< -o $@
+
+mkdir:
+	@mkdir -p $(PDFDIR)
 
 clean:
 	@$(RM) $(EXES) $(DEPS)
