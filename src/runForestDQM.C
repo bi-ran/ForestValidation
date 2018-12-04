@@ -591,6 +591,8 @@ int runForestDQM(std::vector<std::string> inFileNames, const std::string additio
     std::vector<std::string> tempTrees = returnRootFileContentsList(inFiles_p[fI], "TTree", treeSelect);
     removeVectorDuplicates(&tempTrees);
     tempTrees.erase(std::remove(tempTrees.begin(), tempTrees.end(), "hltanalysis/HltTree"), tempTrees.end());
+    tempTrees.erase(std::remove_if(tempTrees.begin(), tempTrees.end(), [](const std::string& tree) {
+	return tree.find("hltobject") != std::string::npos; }), tempTrees.end());
     dumpTreeNames(inFileNames.at(fI), tempTrees);
     fileTrees.push_back(tempTrees);
     misMatchedTrees.push_back({});
