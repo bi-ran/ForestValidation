@@ -73,7 +73,7 @@ bool doStringsMatch(std::vector<std::string>* fileList1, std::vector<std::string
     if(!matchFound){
       allMatch = false;
       std::cout << " No match found for Tree \'" << fileList1->at(fI1) << "\', removing..." << std::endl;
-      misMatch1->push_back(fileList1->at(fI1));
+      misMatch2->push_back(fileList1->at(fI1));
       fileList1->erase(fileList1->begin()+fI1);
     }
     else fI1++;
@@ -91,7 +91,7 @@ bool doStringsMatch(std::vector<std::string>* fileList1, std::vector<std::string
     if(!matchFound){
       allMatch = false;
       std::cout << " No match found for Tree \'" << fileList2->at(fI1) << "\', removing..." << std::endl;
-      misMatch2->push_back(fileList2->at(fI1));
+      misMatch1->push_back(fileList2->at(fI1));
       fileList2->erase(fileList2->begin()+fI1);
     }
     else fI1++;
