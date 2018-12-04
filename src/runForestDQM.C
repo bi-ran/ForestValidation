@@ -112,6 +112,32 @@ std::string texFriendlyString(std::string inStr)
   return outStr;
 }
 
+template<typename T>
+void minmax_vector_branch(TTree* tree_p[], Int_t const nFiles,
+			  std::vector<std::vector<std::string>>& branchList, uint32_t bI1,
+			  double& minVal, double& maxVal) {
+  std::vector<T>* vector_p = 0;
+
+  for(Int_t fI = 0; fI < nFiles; ++fI){
+    tree_p[fI]->SetBranchStatus("*", 0);
+    tree_p[fI]->SetBranchStatus(branchList.at(0).at(bI1).c_str(), 1);
+    tree_p[fI]->SetBranchAddress(branchList.at(0).at(bI1).c_str(), &vector_p);
+
+    const Int_t nEntries1 = tree_p[fI]->GetEntries();
+    for(Int_t entry = 0; entry < nEntries1; ++entry){
+      tree_p[fI]->GetEntry(entry);
+
+      if(vector_p->empty()) continue;
+
+      auto maxMin = std::minmax_element(vector_p->begin(), vector_p->end());
+      if(minVal > *(maxMin.first))
+	minVal = *(maxMin.first);
+      if(maxVal < *(maxMin.second))
+	maxVal = *(maxMin.second);
+    }
+  }
+}
+
 void doFirstTexSlide(std::ofstream* fileTex, std::vector<std::string> inFileNames, std::vector<std::string> inNickNames, std::vector<std::string> goodTrees, std::vector<std::vector<std::string> > missingTrees, const Int_t eventCountOverride)
 {
   TDatime date;
@@ -609,11 +635,6 @@ int runForestDQM(std::vector<std::string> inFileNames, const std::string additio
 
   doFirstTexSlide(&fileTex, inFileNames, inNickNames, fileTrees.at(0), misMatchedTrees, eventCountOverride);
 
-  std::vector<int>* intVect_p=NULL;
-  std::vector<short>* shortVect_p=NULL;
-  std::vector<float>* floatVect_p=NULL;
-  std::vector<double>* doubleVect_p=NULL;
-
   for(unsigned int tI = 0; tI < fileTrees.at(0).size(); ++tI){
     std::cout << "Processing \'" << fileTrees.at(0).at(tI) << "\'..." << std::endl;
 
@@ -750,186 +771,17 @@ int runForestDQM(std::vector<std::string> inFileNames, const std::string additio
       
       //We have to handle vectors differently, getMax and getMin do not work from ttree
       if(tempClassType.find("vector") != std::string::npos && tempClassType.find("vector<vector") == std::string::npos){
-	//	std::cout << "Searching for vector max/min of branch \'" << branchList.at(0).at(bI1) << "\'" << std::endl;
-
-	bool isFirstFound = false;
-
 	if(tempClassType.find("int") != std::string::npos){
-	  //	  std::cout << " Doing int search..." << std::endl;
-
-	  for(Int_t fI = 0; fI < nFiles; ++fI){
-	    tree_p[fI]->SetBranchStatus("*", 0);
-	    tree_p[fI]->SetBranchStatus(branchList.at(0).at(bI1).c_str(), 1);
-	    
-	    tree_p[fI]->SetBranchAddress(branchList.at(0).at(bI1).c_str(), &intVect_p);
-
-	    const Int_t nEntries1 = tree_p[fI]->GetEntries();
-	    
-	    int startPos = 0;
-	    while(!isFirstFound && startPos < nEntries1){
-	      tree_p[fI]->GetEntry(startPos);
-	      
-	      ++startPos;
-	      if(intVect_p->size() == 0) continue;
-
-	      isFirstFound = true;
-
-	      auto maxMin = std::minmax_element(intVect_p->begin(), intVect_p->end());
-	      minVal = *(maxMin.first);
-	      maxVal = *(maxMin.second);
-	      minValFile = inFileNames.at(fI);
-	      maxValFile = inFileNames.at(fI);
-	    }
-
-	    for(Int_t entry = startPos; entry < nEntries1; ++entry){
-	      tree_p[fI]->GetEntry(entry);
-
-	      if(intVect_p->size() == 0) continue;
-
-	      auto maxMin = std::minmax_element(intVect_p->begin(), intVect_p->end());
-	      if(minVal > *(maxMin.first)){
-		minVal = *(maxMin.first);
-		minValFile = inFileNames.at(fI);
-	      }
-	      if(maxVal < *(maxMin.second)){
-		maxVal = *(maxMin.second);
-		maxValFile = inFileNames.at(fI);
-	      }
-	    }
-	  }
+	  minmax_vector_branch<int>(tree_p, nFiles, branchList, bI1, minVal, maxVal);
 	}
 	else if(tempClassType.find("short") != std::string::npos){
-	  //	  std::cout << " Doing short search..." << std::endl;
-
-	  for(Int_t fI = 0; fI < nFiles; ++fI){
-	    tree_p[fI]->SetBranchStatus("*", 0);
-	    tree_p[fI]->SetBranchStatus(branchList.at(0).at(bI1).c_str(), 1);
-	    
-	    tree_p[fI]->SetBranchAddress(branchList.at(0).at(bI1).c_str(), &shortVect_p);
-
-	    const Int_t nEntries1 = tree_p[fI]->GetEntries();
-	    
-	    int startPos = 0;
-	    while(!isFirstFound && startPos < nEntries1){
-	      tree_p[fI]->GetEntry(startPos);
-	      
-	      ++startPos;
-	      if(shortVect_p->size() == 0) continue;
-
-	      isFirstFound = true;
-
-	      auto maxMin = std::minmax_element(shortVect_p->begin(), shortVect_p->end());
-	      minVal = *(maxMin.first);
-	      maxVal = *(maxMin.second);
-	      minValFile = inFileNames.at(fI);
-	      maxValFile = inFileNames.at(fI);
-	    }
-
-	    for(Int_t entry = startPos; entry < nEntries1; ++entry){
-	      tree_p[fI]->GetEntry(entry);
-
-	      if(shortVect_p->size() == 0) continue;
-
-	      auto maxMin = std::minmax_element(shortVect_p->begin(), shortVect_p->end());
-	      if(minVal > *(maxMin.first)){
-		minVal = *(maxMin.first);
-		minValFile = inFileNames.at(fI);
-	      }
-	      if(maxVal < *(maxMin.second)){
-		maxVal = *(maxMin.second);
-		maxValFile = inFileNames.at(fI);
-	      }
-	    }
-	  }
+	  minmax_vector_branch<short>(tree_p, nFiles, branchList, bI1, minVal, maxVal);
 	}
 	else if(tempClassType.find("float") != std::string::npos){
-	  //	  std::cout << " Doing float search..." << std::endl;
-
-	  for(Int_t fI = 0; fI < nFiles; ++fI){
-	    tree_p[fI]->SetBranchStatus("*", 0);
-	    tree_p[fI]->SetBranchStatus(branchList.at(0).at(bI1).c_str(), 1);
-	    
-	    tree_p[fI]->SetBranchAddress(branchList.at(0).at(bI1).c_str(), &floatVect_p);
-	    
-	    const Int_t nEntries1 = tree_p[fI]->GetEntries();
-
-	    int startPos = 0;
-	    while(!isFirstFound && startPos < nEntries1){
-	      tree_p[fI]->GetEntry(startPos);
-	      
-	      ++startPos;
-	      if(floatVect_p->size() == 0) continue;
-
-	      isFirstFound = true;
-	      
-	      auto maxMin = std::minmax_element(floatVect_p->begin(), floatVect_p->end());
-	      minVal = *(maxMin.first);
-	      maxVal = *(maxMin.second);
-	      minValFile = inFileNames.at(fI);
-	      maxValFile = inFileNames.at(fI);
-	    }
-
-	    for(Int_t entry = startPos; entry < nEntries1; ++entry){
-	      tree_p[fI]->GetEntry(entry);
-	      
-	      if(floatVect_p->size() == 0) continue;
-
-	      auto maxMin = std::minmax_element(floatVect_p->begin(), floatVect_p->end());
-
-	      if(minVal > *(maxMin.first)){
-		minVal = *(maxMin.first);
-		minValFile = inFileNames.at(fI);
-	      }
-	      if(maxVal < *(maxMin.second)){
-		maxVal = *(maxMin.second);
-		maxValFile = inFileNames.at(fI);
-	      }
-	    }
-	  }
+	  minmax_vector_branch<float>(tree_p, nFiles, branchList, bI1, minVal, maxVal);
 	}
 	else if(tempClassType.find("double") != std::string::npos){
-	  //	  std::cout << " Doing double search..." << std::endl;
-
-	  for(Int_t fI = 0; fI < nFiles; ++fI){
-	    tree_p[fI]->SetBranchStatus("*", 0);
-	    tree_p[fI]->SetBranchStatus(branchList.at(0).at(bI1).c_str(), 1);
-	    
-	    tree_p[fI]->SetBranchAddress(branchList.at(0).at(bI1).c_str(), &doubleVect_p);
-	    
-	    const Int_t nEntries1 = tree_p[fI]->GetEntries();
-
-	    int startPos = 0;
-	    while(!isFirstFound && startPos < nEntries1){
-	      tree_p[fI]->GetEntry(startPos);
-	      
-	      ++startPos;
-	      if(doubleVect_p->size() == 0) continue;
-
-	      isFirstFound = true;
-	      
-	      auto maxMin = std::minmax_element(doubleVect_p->begin(), doubleVect_p->end());
-	      minVal = *(maxMin.first);
-	      maxVal = *(maxMin.second);
-	      minValFile = inFileNames.at(fI);
-	      maxValFile = inFileNames.at(fI);
-	    }
-
-	    for(Int_t entry = startPos; entry < nEntries1; ++entry){
-	      tree_p[fI]->GetEntry(entry);
-
-	      if(doubleVect_p->size() == 0) continue;
-	      
-	      auto maxMin = std::minmax_element(doubleVect_p->begin(), doubleVect_p->end());
-	      if(minVal > *(maxMin.first)){
-		minVal = *(maxMin.first);
-		minValFile = inFileNames.at(fI);
-	      }
-	      if(maxVal < *(maxMin.second)){
-		maxVal = *(maxMin.second);
-		maxValFile = inFileNames.at(fI);
-	      }
-	    }
-	  }	 
+	  minmax_vector_branch<double>(tree_p, nFiles, branchList, bI1, minVal, maxVal);
 	}
 	else{
 	  std::cout << "Warning do not know how to handle vector \'" << tempClassType << "\'. return 1" << std::endl;
