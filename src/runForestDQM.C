@@ -788,6 +788,17 @@ int runForestDQM(std::vector<std::string> inFileNames, const std::string additio
 	  return 1;
 	}
       }
+
+      if (!isfinite(minVal) || !isfinite(maxVal)) {
+	warningList.push_back(branchList.at(0).at(bI1));
+	warningListPos.push_back(bI1);
+      }
+
+      /* usually indicates an empty array */
+      if (minVal == std::numeric_limits<float>::max() &&
+	  maxVal == -std::numeric_limits<float>::max()) {
+	minVal = 0; maxVal = 1;
+      }
     
       std::vector<std::string> histNames;
       for(Int_t fI = 0; fI < nFiles; ++fI){
@@ -899,7 +910,9 @@ int runForestDQM(std::vector<std::string> inFileNames, const std::string additio
 
       maxVal = tempHist_p[0]->GetMinimum();
       minVal = tempHist_p[0]->GetMaximum();
-      
+
+      if (minVal == 0 && maxVal == 0) { maxVal = 1; }
+
       for(Int_t fI = 0; fI < nFiles; ++fI){
 	for(Int_t bIX = 0; bIX < tempHist_p[fI]->GetNbinsX(); ++bIX){
 	  if(tempHist_p[fI]->GetBinContent(bIX+1) != 0){
