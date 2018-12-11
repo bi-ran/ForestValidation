@@ -880,6 +880,26 @@ int runForestDQM(std::vector<std::string>& inFileNames, const std::string& addit
 	getLinBins(minVal, maxVal, nBins, bins);
       }
 
+      TH1D* hframe = new TH1D("hframe", (";" + branchList[0][bI1] + ";" + globalYStr).data(), nBins, bins);
+
+      hframe->GetXaxis()->SetTitle(branchList[0][bI1].data());
+      hframe->GetYaxis()->SetTitle(globalYStr.data());
+
+      hframe->GetXaxis()->SetTitleFont(43);
+      hframe->GetYaxis()->SetTitleFont(43);
+      hframe->GetXaxis()->SetLabelFont(43);
+      hframe->GetYaxis()->SetLabelFont(43);
+
+      hframe->GetXaxis()->SetTitleSize(12);
+      hframe->GetYaxis()->SetTitleSize(10);
+      hframe->GetXaxis()->SetLabelSize(12);
+      hframe->GetYaxis()->SetLabelSize(10);
+
+      hframe->GetXaxis()->SetTitleOffset(hframe->GetXaxis()->GetTitleOffset()*4.);
+      hframe->GetYaxis()->SetTitleOffset(hframe->GetXaxis()->GetTitleOffset()/3.);
+
+      centerTitles(hframe);
+
       for(int fI = 0; fI < nFiles; ++fI){
 	tree_p[fI]->ResetBranchAddresses();
 	tree_p[fI]->SetBranchStatus("*", 0);
@@ -887,31 +907,13 @@ int runForestDQM(std::vector<std::string>& inFileNames, const std::string& addit
 
 	tempHist_p[fI] = new TH1D(histNames[fI].data(), (";" + branchList[0][bI1] + ";" + globalYStr).data(), nBins, bins);
 
-	if(eventCountOverride < 0) tree_p[fI]->Project(histNames[fI].data(), branchList[0][bI1].data(), "", "");
-	else tree_p[fI]->Project(histNames[fI].data(), branchList[0][bI1].data(), "", "", eventCountOverride);
-
-	tempHist_p[fI]->GetXaxis()->SetTitle(branchList[0][bI1].data());
-	tempHist_p[fI]->GetYaxis()->SetTitle(globalYStr.data());
-
 	tempHist_p[fI]->SetMarkerSize(1.0);
 	tempHist_p[fI]->SetMarkerStyle(styles[fI]);
 	tempHist_p[fI]->SetMarkerColor(colors[fI]);
 	tempHist_p[fI]->SetLineColor(colors[fI]);
 
-	tempHist_p[fI]->GetXaxis()->SetTitleFont(43);
-	tempHist_p[fI]->GetYaxis()->SetTitleFont(43);
-	tempHist_p[fI]->GetXaxis()->SetLabelFont(43);
-	tempHist_p[fI]->GetYaxis()->SetLabelFont(43);
-
-	tempHist_p[fI]->GetXaxis()->SetTitleSize(12);
-	tempHist_p[fI]->GetYaxis()->SetTitleSize(10);
-	tempHist_p[fI]->GetXaxis()->SetLabelSize(12);
-	tempHist_p[fI]->GetYaxis()->SetLabelSize(10);
-
-	tempHist_p[fI]->GetXaxis()->SetTitleOffset(tempHist_p[fI]->GetXaxis()->GetTitleOffset()*4.);
-	tempHist_p[fI]->GetYaxis()->SetTitleOffset(tempHist_p[fI]->GetXaxis()->GetTitleOffset()/3.);
-
-	centerTitles(tempHist_p[fI]);
+	if(eventCountOverride < 0) tree_p[fI]->Project(histNames[fI].data(), branchList[0][bI1].data(), "", "");
+	else tree_p[fI]->Project(histNames[fI].data(), branchList[0][bI1].data(), "", "", eventCountOverride);
 	setSumW2(tempHist_p[fI]);
 
 	if(doEventNorm) tempHist_p[fI]->Scale(1./(Double_t)tree_p[fI]->GetEntries());
@@ -943,15 +945,16 @@ int runForestDQM(std::vector<std::string>& inFileNames, const std::string& addit
 	else minVal = 0;
       }
 
-      tempHist_p[0]->SetMaximum(maxVal);
-      tempHist_p[0]->SetMinimum(minVal);
+      hframe->SetMaximum(maxVal);
+      hframe->SetMinimum(minVal);
+
+      hframe->Draw("axis");
 
       canv_p->cd();
       pads_p[0]->cd();
 
       for(int fI = 0; fI < nFiles; ++fI){
-	if(fI == 0) tempHist_p[fI]->DrawCopy("E1 P");
-	else tempHist_p[fI]->DrawCopy("E1 P SAME");
+	tempHist_p[fI]->DrawCopy("E1 P SAME");
       }
 
       leg_p->Draw("SAME");
