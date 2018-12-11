@@ -1,11 +1,6 @@
 CXX = g++
 CXXFLAGS += -O2 -Wall -Wextra -Werror -I.
-CXXFLAGS += -Wno-unused-local-typedefs -Wno-deprecated-declarations
 ROOTFLAGS := `root-config --cflags --glibs`
-
-ifeq "$(GCCVERSION)" "1"
-	CXXFLAGS += -Wno-error=misleading-indentation
-endif
 
 SRCDIR = ./src
 BINDIR = ./bin
